@@ -9,6 +9,7 @@ import logging
 """
 
 class serialPort():
+    port = '/dev/ttyACM0'
     coms = None
     connected = False
 
@@ -16,6 +17,7 @@ class serialPort():
         return self.connected
 
     def connect(self, port='/tmp/ttyS11'):
+        self.port = port
         try:
             self.coms = serial.Serial(
                 port=port,
@@ -51,7 +53,6 @@ class serialPort():
         out = ''
         while self.coms.inWaiting() > 0:
             out += self.coms.read(1)
-            print out
         return out
 
     def close(self):
