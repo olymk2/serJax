@@ -98,14 +98,14 @@ class DataSend(Resource):
         """ Buffer multiple commands"""
         data = StringIO(request.form['data'])
         for line in data.readlines():
-            printer.write(bytes(line))
+            printer.write(line.encode('ascii'))
         return {'status': 'ok'}, 201
 
     @connected
     @api_lock
     def put(self):
         """send single command"""
-        printer.write(bytes(request.form.get('data', '')))
+        printer.write(request.form.get('data', '').encode('ascii'))
         return {'status': 'ok'}, 201
 
 class DataRecv(Resource):

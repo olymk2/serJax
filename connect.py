@@ -38,10 +38,10 @@ class serialPort():
             yield port
 
     def write(self, data):
-        self.coms.write(data + '\r\n')
+        self.coms.write(data)
 
     def send(self, data):
-        self.coms.write(data + '\r\n')
+        self.coms.write(data)
 
     def recv(self):
         out = ''

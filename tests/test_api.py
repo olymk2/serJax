@@ -28,7 +28,7 @@ class FlaskTestCase(unittest.TestCase):
     def get_api_lock(self):
         """helper to get a lok on the api"""
         response = self.app.get('/open')
-        json_data = json.loads(response.get_data())
+        json_data = json.loads(response.get_data().decode('ascii'))
         return str(json_data.get('api_lock', ''))
 
     def open_port(self):
@@ -40,7 +40,7 @@ class FlaskTestCase(unittest.TestCase):
     def test_create_api_lock(self):
         """Test that we can get an api_lock key"""
         response = self.app.get('/open')
-        json_data = json.loads(response.get_data())
+        json_data = json.loads(response.get_data().decode('ascii'))
         length = len(str(json_data.get('api_lock', '')))
         self.assertGreaterEqual(length, 37)
         self.assertEqual(response.status_code, 201)
@@ -66,20 +66,20 @@ class FlaskTestCase(unittest.TestCase):
 
     def test_write_data(self):
         """test writting data to the api"""
-        send_data = 'ello'
+        send_data = u'ello'
         api_lock = self.get_api_lock()
         response = self.app.put('/open', data={'port': self.slave_port}, headers={'api_lock': api_lock})
         response = self.app.put('/write', data={'data': send_data}, headers={'api_lock': api_lock})
-        self.assertEqual(send_data + '\r\n', os.read(self.master_pty, 1024))
+        self.assertEqual(send_data, os.read(self.master_pty, 1024).decode('ascii'))
         self.assertEqual(response.status_code, 201)
 
     def test_write_data_buffered(self):
         """test writting data to the api"""
-        send_data = 'ello'
+        send_data = u'ello'
         api_lock = self.get_api_lock()
         response = self.app.put('/open', data={'port': self.slave_port}, headers={'api_lock': api_lock})
         response = self.app.post('/write', data={'data': send_data}, headers={'api_lock': api_lock})
-        self.assertEqual(send_data + '\r\n', os.read(self.master_pty, 1024))
+        self.assertEqual(send_data, os.read(self.master_pty, 1024).decode('ascii'))
         self.assertEqual(response.status_code, 201)
 
     def test_get_port_list(self):

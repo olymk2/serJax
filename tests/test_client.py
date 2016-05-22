@@ -22,7 +22,7 @@ class testSerial(serial):
             self.app.get(
                 url, 
                 headers = self.headers
-            ).get_data()
+            ).get_data().decode('ascii')
         )
 
     def put(self, url, data=None):
@@ -31,7 +31,7 @@ class testSerial(serial):
                 url,
                 data=data,
                 headers = self.headers
-            ).get_data()
+            ).get_data().decode('ascii')
         )
 
     def post(self, url, data=None):
@@ -40,7 +40,7 @@ class testSerial(serial):
                 url,
                 data=data,
                 headers = self.headers
-            ).get_data()
+            ).get_data().decode('ascii')
         )
 
 
@@ -62,9 +62,9 @@ class FlaskTestCase(unittest.TestCase):
         send_value2 = 'Test value'
         with testSerial(port=self.slave_port) as sp:
             sp.write(send_value1)
-            self.assertEquals(send_value1 + '\r\n', os.read(self.master_pty, 1024))
+            self.assertEqual(send_value1, os.read(self.master_pty, 1024).decode('ascii'))
             sp.write(send_value2)
-            self.assertEquals(send_value2 + '\r\n', os.read(self.master_pty, 1024))
+            self.assertEqual(send_value2, os.read(self.master_pty, 1024).decode('ascii'))
 
     def test_multiple_send(self):
         send_values = StringIO(u"""
@@ -75,7 +75,7 @@ class FlaskTestCase(unittest.TestCase):
         with testSerial(port=self.slave_port) as sp:
             sp.writelines(send_values)
             send_values.seek(0)
-            self.assertEquals(send_values.read() + '\r\n', os.read(self.master_pty, 1024))
+            self.assertEqual(send_values.read(), os.read(self.master_pty, 1024).decode('ascii'))
 
     def test_open_connection(self):
         """Test that we can get an api_lock key"""
