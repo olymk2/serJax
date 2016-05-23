@@ -75,7 +75,11 @@ class FlaskTestCase(unittest.TestCase):
 
     def test_write_data_buffered(self):
         """test writting data to the api"""
-        send_data = u'ello'
+        send_data = u"""
+            ello 1\n
+            ello 2\n
+            ello 3\n
+            ello 4\n"""
         api_lock = self.get_api_lock()
         response = self.app.put('/open', data={'port': self.slave_port}, headers={'api_lock': api_lock})
         response = self.app.post('/write', data={'data': send_data}, headers={'api_lock': api_lock})
@@ -86,6 +90,38 @@ class FlaskTestCase(unittest.TestCase):
         """Get a list of ports this can be done by anyone at any time no locking involved"""
         response = self.app.get('/ports')
         self.assertEqual(response.status_code, 201)
+
+    def test_status(self):
+        """Get size in waiting"""
+        self.open_port()
+        response = self.app.get('/status')
+        self.assertEqual(response.status_code, 201)
+
+    def test_in_waiting(self):
+        """Get size in waiting"""
+        api_lock = self.open_port()
+        response = self.app.get('/waiting',headers={'api_lock': api_lock})
+
+        self.assertEqual(response.status_code, 201)
+
+        json_data = json.loads(response.get_data().decode('ascii'))
+        self.assertEqual(json_data.get('size'), 0)
+
+    def test_history(self):
+        """Get size in waiting"""
+        api_lock = self.open_port()
+        response = self.app.get('/history')
+        self.assertEqual(response.status_code, 201)
+
+        json_data = json.loads(response.get_data().decode('ascii'))
+        self.assertEqual(json_data.get('data'), '[]')
+
+        response = self.app.put('/write', data={'data': 'command 1'}, headers={'api_lock': api_lock})
+        response = self.app.get('/history')
+        json_data = json.loads(response.get_data().decode('ascii'))
+        self.assertEqual(json_data.get('data'), '["write command 1"]')
+        self.assertEqual(response.status_code, 201)
+
 
 if __name__ == '__main__':
     unittest.main()

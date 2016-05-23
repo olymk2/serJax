@@ -77,6 +77,16 @@ class FlaskTestCase(unittest.TestCase):
             send_values.seek(0)
             self.assertEqual(send_values.read(), os.read(self.master_pty, 1024).decode('ascii'))
 
+    def test_is_connected(self):
+        """Test that we can get an api_lock key"""
+        with testSerial(port=self.master_port) as serial_port:
+            serial_port.isConnected();
+
+    def test_in_waiting(self):
+        """Test that we can get an api_lock key"""
+        with testSerial(port=self.master_port) as serial_port:
+            serial_port.inWaiting();
+
     def test_open_connection(self):
         """Test that we can get an api_lock key"""
         with testSerial(port=self.master_port) as sp1:

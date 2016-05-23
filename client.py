@@ -22,6 +22,14 @@ class serial(object):
     def post(self, url, data=None):
         return post(url, data=data, headers = self.headers).json()
 
+    def isConnected(self):
+        response = self.get('%s/status' % self.url)
+        return response.get('connected', False)
+
+    def inWaiting(self):
+        response = self.get('%s/waiting' % self.url)
+        return response.get('size', 0)
+
     def ports(self):
         ports = self.get('%s/ports' % (self.url)).json()
         return ports.keys()

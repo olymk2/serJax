@@ -2,21 +2,20 @@
 # -*- coding: utf-8 -*-
 __version__ = '0.1.1'
 
-import os
-import sys
+import json
 import urllib
 import random
 from io import StringIO
 
-sys.path.append(os.path.abspath('../../../'))
-
-from connect import serialPort
-
+from collections import deque
 from flask import Flask
 from flask import request
 from flask_restful import reqparse, abort, Api, Resource
 
+from connect import serialPort
+
 serial_lock = None
+history = deque(maxlen=100)
 printer = serialPort()
 root_url = 'http://127.0.0.1:5005/'
 
@@ -82,7 +81,17 @@ class Help(Resource):
         for rule in app.url_map.iter_rules():
             if rule.endpoint != 'static':
                 func_list[rule.rule] = app.view_functions[rule.endpoint].__doc__
-        return jsonify(func_list)
+        return json.dumps(func_list)
+
+class Status(Resource):
+    def get(self):
+        return {'connected': printer.isConnected(), 'locked':True if serial_lock else False}, 201
+
+class Waiting(Resource):
+    @connected
+    @api_lock
+    def get(self):
+        return {'size': printer.inWaiting()}, 201
 
 class PortList(Resource):
     def get(self):
@@ -91,20 +100,33 @@ class PortList(Resource):
             portlist[p] = '%sconnect/%s' % (root_url, urllib.quote(p.strip('/')))
         return portlist, 201
 
+class History(Resource):
+    def get(self):
+        """Get history of read, usefull for debugging"""
+        return {'data': json.dumps(list(history))}, 201
+
 class DataSend(Resource):
     @connected
     @api_lock
     def post(self):
         """ Buffer multiple commands"""
         data = StringIO(request.form['data'])
+        next_command = request.form.get('response_String')
         for line in data.readlines():
             printer.write(line.encode('ascii'))
+            if next_command:
+                buffer_length = printer.inWaiting()
+                if buffer_length > 0:
+                    buffer_read = printer.read(buffer_length)
+                    history.append(u'next ' + buffer_read)
+
         return {'status': 'ok'}, 201
 
     @connected
     @api_lock
     def put(self):
         """send single command"""
+        history.append(u'write %s' % request.form.get('data', ''))
         printer.write(request.form.get('data', '').encode('ascii'))
         return {'status': 'ok'}, 201
 
@@ -112,11 +134,19 @@ class DataRecv(Resource):
     @connected
     @api_lock
     def get(self):
-        return {'data': 'Ok'}, 201
+        buffer_read = ''
+        buffer_length = printer.inWaiting()
+        if buffer_length > 0:
+            buffer_read = printer.read(buffer_length)
+            history.append(u'recv  ' + buffer_read)
+        return {'data': buffer_read}, 201
 
 ## Actually setup the Api resource routing here
 
 api.add_resource(Connection, '/open')
+api.add_resource(History, '/history')
+api.add_resource(Status, '/status')
+api.add_resource(Waiting, '/waiting')
 api.add_resource(PortList, '/ports')
 api.add_resource(DataSend, '/write')
 api.add_resource(DataRecv, '/recv')
@@ -125,4 +155,3 @@ api.add_resource(ClosePort, '/close')
 if __name__ == '__main__':
     app.run(debug=True, port=5005)
 
-#serJax

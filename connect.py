@@ -37,6 +37,10 @@ class serialPort():
         for port in glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*'):
             yield port
 
+
+    def inWaiting(self):
+        return self.coms.inWaiting()
+
     def write(self, data):
         self.coms.write(data)
 
