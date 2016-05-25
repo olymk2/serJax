@@ -87,9 +87,24 @@ class FlaskTestCase(unittest.TestCase):
         with testSerial(port=self.master_port) as serial_port:
             serial_port.inWaiting();
 
+    def test_read(self):
+        """Test that we can get an api_lock key"""
+        text = 'long string'
+        with testSerial(port=self.slave_port) as serial_port:
+            os.write(self.master_pty, text)
+            self.assertEqual(text, serial_port.read())
+
+    def test_recv(self):
+        """Test that we can get an api_lock key"""
+        text = 'long string'
+        with testSerial(port=self.slave_port) as serial_port:
+            os.write(self.master_pty, text)
+            #self.assertEqual(text, serial_port.recv())
+
+
     def test_open_connection(self):
         """Test that we can get an api_lock key"""
-        with testSerial(port=self.master_port) as sp1:
+        with testSerial(port=self.slave_port) as sp1:
             sp1.read()
             with testSerial(port=self.master_port) as sp2:
                 sp2.read()

@@ -48,11 +48,15 @@ class serial(object):
 
     def writelines(self, data):
         self.post('%s/write' % self.url, data={'data': data.read()})
-    
+
+    def recv(self, length=1):
+        result = self.get('%s/recv/%d' % (self.url, length))
+        return result.get('data')
+
     def read(self):
         result = self.get('%s/recv' % self.url)
         return result.get('data')
-    
+
     def __exit__(self, type, value, traceback):
         self.api_lock = ''
         self.get('%s/close' % self.url)

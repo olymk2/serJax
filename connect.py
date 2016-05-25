@@ -47,10 +47,18 @@ class serialPort():
     def send(self, data):
         self.coms.write(data)
 
-    def recv(self):
+    def read(self):
+        """ Read entire buffer """
         out = ''
-        while self.coms.inWaiting() > 0:
+        while self.coms.inWaiting():
             out += self.coms.read(1)
+        return out
+
+    def recv(self, length=1):
+        """ Read limited length buffer"""
+        out = ''
+        if self.coms.inWaiting() >= length:
+            out = self.coms.read(1)
         return out
 
     def receive(self):

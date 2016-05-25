@@ -133,11 +133,14 @@ class DataSend(Resource):
 class DataRecv(Resource):
     @connected
     @api_lock
-    def get(self):
+    def get(self, length=None):
         buffer_read = ''
         buffer_length = printer.inWaiting()
         if buffer_length > 0:
-            buffer_read = printer.read(buffer_length)
+            if length is None:
+                buffer_read = printer.read()
+            else:
+                buffer_read = printer.recv(buffer_length)
             history.append(u'recv  ' + buffer_read)
         return {'data': buffer_read}, 201
 
@@ -153,5 +156,5 @@ api.add_resource(DataRecv, '/recv')
 api.add_resource(ClosePort, '/close')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5005)
+    app.run(host='0.0.0.0', debug=True, port=5005)
 
