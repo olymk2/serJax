@@ -1,27 +1,24 @@
 import os
-import sys
 import pty
 import json
 import unittest
-
 from io import StringIO
-sys.path.append(os.path.abspath('../'))
+from serjax.server import app
+from serjax.client import serial
 
-from server import app
-from client import serial
 
 class testSerial(serial):
     """override the client get and put methods for testing"""
     def __init__(self, url='', port=None):
         self.app = app.test_client()
-        self.app.testing = True 
+        self.app.testing = True
         super(testSerial, self).__init__(url=url, port=port)
 
     def get(self, url):
         return json.loads(
             self.app.get(
-                url, 
-                headers = self.headers
+                url,
+                headers=self.headers
             ).get_data().decode('ascii')
         )
 
@@ -30,7 +27,7 @@ class testSerial(serial):
             self.app.put(
                 url,
                 data=data,
-                headers = self.headers
+                headers=self.headers
             ).get_data().decode('ascii')
         )
 
@@ -39,7 +36,7 @@ class testSerial(serial):
             self.app.put(
                 url,
                 data=data,
-                headers = self.headers
+                headers=self.headers
             ).get_data().decode('ascii')
         )
 
@@ -80,12 +77,12 @@ class FlaskTestCase(unittest.TestCase):
     def test_is_connected(self):
         """Test that we can get an api_lock key"""
         with testSerial(port=self.master_port) as serial_port:
-            serial_port.isConnected();
+            serial_port.isConnected()
 
     def test_in_waiting(self):
         """Test that we can get an api_lock key"""
         with testSerial(port=self.master_port) as serial_port:
-            serial_port.inWaiting();
+            serial_port.inWaiting()
 
     def test_read(self):
         """Test that we can get an api_lock key"""

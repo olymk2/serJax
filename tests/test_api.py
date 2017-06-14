@@ -1,12 +1,8 @@
 import os
-import sys
 import pty
 import json
 import unittest
-
-sys.path.append(os.path.abspath('../'))
-
-from server import app
+from serjax.server import app
 
 
 class FlaskTestCase(unittest.TestCase):
@@ -14,7 +10,7 @@ class FlaskTestCase(unittest.TestCase):
     def setUp(self):
         """Create instance of app and a serial port to use"""
         self.app = app.test_client()
-        self.app.testing = True 
+        self.app.testing = True
         self.master_pty, self.slave_pty = pty.openpty()
         self.slave_port = os.ttyname(self.slave_pty)
         self.master_port = os.ttyname(self.master_pty)

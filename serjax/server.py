@@ -12,7 +12,7 @@ from flask import Flask
 from flask import request
 from flask_restful import reqparse, abort, Api, Resource
 
-from connect import serialPort
+from serjax.connect import serialPort
 
 serial_lock = None
 history = deque(maxlen=100)

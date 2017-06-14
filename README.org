@@ -1,12 +1,23 @@
-# serJax
+* serJax
 
 Turn your serial port into an API which you can connect to remotely and send data over the remote connection.
 
-## Install
+** Install
     todo
 
 ## Usage
     todo
+
+** Development
+If you want to develop this library run the below command to install for development.
+#+BEGIN_SRC sh
+python setup.py develop
+#+END_SRC
+
+Run the tests with 
+#+BEGIN_SRC sh
+python setup.py test
+#+END_SRC
 
 ## Requirements
 ```
