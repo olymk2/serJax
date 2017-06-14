@@ -3,6 +3,7 @@ import pty
 import json
 import unittest
 from io import StringIO
+from io import BytesIO
 from serjax.server import app
 from serjax.client import serial
 
@@ -86,14 +87,14 @@ class FlaskTestCase(unittest.TestCase):
 
     def test_read(self):
         """Test that we can get an api_lock key"""
-        text = 'long string'
+        text = b'long string'
         with testSerial(port=self.slave_port) as serial_port:
             os.write(self.master_pty, text)
             self.assertEqual(text, serial_port.read())
 
     def test_recv(self):
         """Test that we can get an api_lock key"""
-        text = 'long string'
+        text = b'long string'
         with testSerial(port=self.slave_port) as serial_port:
             os.write(self.master_pty, text)
             #self.assertEqual(text, serial_port.recv())
