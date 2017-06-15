@@ -1,9 +1,5 @@
 import os
-import pty
 import json
-from contextlib import contextmanager
-
-from serjax.server import app as app_test
 from tests.helper import fetch_api_lock
 
 
@@ -72,6 +68,10 @@ def test_get_port_list():
     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
         response = app.get('/ports')
         assert response.status_code == 201
+
+        json_data = json.loads(response.get_data().decode('ascii'))
+        assert sport in json_data.keys()
+        assert mport in json_data.keys()
 
 
 def test_status():

@@ -2,13 +2,9 @@ import glob
 import serial
 import logging
 
-""" 
-    usefull for testing, setup fake serial ports and monitor in screen
-    #socat -d -d pty,raw,echo=0 pty,raw,echo=0
-    #screen /dev/ttyUSB0 57600
-"""
 
 class serialPort():
+    """ Serial port wrapper """
     port = '/dev/ttyACM0'
     coms = None
     connected = False
@@ -25,7 +21,7 @@ class serialPort():
                 timeout=0,
                 rtscts=True, dsrdtr=True
             )
-            
+
             self.connected = self.coms.isOpen()
             return self.connected
         except Exception as e:
@@ -33,10 +29,18 @@ class serialPort():
             self.connected = False
             return False
 
-    def list_ports(self):
-        for port in glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*'):
+    def list_ports(self, pty=True):
+        for port in glob.glob('/dev/ttyUSB*'):
             yield port
+        for port in glob.glob('/dev/ttyACM*'):
+            yield port
+        if pty is False:
+            return
 
+        for port in glob.glob('/dev/pts/*'):
+            yield port
+        for port in glob.glob('/dev/ptmx'):
+            yield port
 
     def inWaiting(self):
         return self.coms.inWaiting()

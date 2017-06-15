@@ -4,6 +4,7 @@ import json
 import pytest
 from contextlib import contextmanager
 from serjax.server import app as app_test
+from serjax.client import serial
 
 
 @contextmanager
@@ -32,3 +33,39 @@ def fetch_api_lock():
     os.close(slave_pty)
     app.get('/close')
 
+
+class testSerial(serial):
+    """override the client get and put methods for testing"""
+    def __init__(self, url='', port=None):
+        self.app = app_test.test_client()
+        self.app.testing = True
+        super(testSerial, self).__init__(url=url, port=port)
+
+    def get(self, url):
+        return json.loads(
+            self.app.get(
+                url,
+                headers=self.headers
+            ).get_data().decode('ascii')
+        )
+
+    def put(self, url, data=None):
+        return json.loads(
+            self.app.put(
+                url,
+                data=data,
+                headers=self.headers
+            ).get_data().decode('ascii')
+        )
+
+    def writelines(self, data):
+        self.post('%s/write' % self.url, data={'data': data.read()})
+
+    def post(self, url, data=None):
+        return json.loads(
+            self.app.put(
+                url,
+                data=data,
+                headers=self.headers
+            ).get_data().decode('ascii')
+        )

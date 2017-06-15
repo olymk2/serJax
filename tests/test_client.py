@@ -1,67 +1,42 @@
 import os
-import pty
-import json
-from io import StringIO
-from serjax.server import app
 from serjax.client import serial
 from tests.helper import fetch_api_lock
+from tests.helper import testSerial 
 
 
-class testSerial(serial):
-    """override the client get and put methods for testing"""
-    def __init__(self, url='', port=None):
-        self.app = app.test_client()
-        self.app.testing = True
-        super(testSerial, self).__init__(url=url, port=port)
-
-    def get(self, url):
-        return json.loads(
-            self.app.get(
-                url,
-                headers=self.headers
-            ).get_data().decode('ascii')
-        )
-
-    def put(self, url, data=None):
-        return json.loads(
-            self.app.put(
-                url,
-                data=data,
-                headers=self.headers
-            ).get_data().decode('ascii')
-        )
-
-    def writelines(self, data):
-        self.post('%s/write' % self.url, data={'data': data.read()})
-
-    def post(self, url, data=None):
-        return json.loads(
-            self.app.put(
-                url,
-                data=data,
-                headers=self.headers
-            ).get_data().decode('ascii')
-        )
-
-
-def test_complete_example():
-    send_value1 = 'EHLO'
-    send_value2 = 'Test value'
-
+def test_send_values():
+    # open psuedo pty serial port, send data with api and raw read its received
     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
-        print(mpty)
-        print(spty)
-        print(mport)
-        print(sport)
-        response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
-        with testSerial(port=sport) as sp:
-            print('1')
-            sp.write(send_value1)
-            print('2')
-            assert send_value1 == os.read(mpty, 1).decode('ascii')
-            print('3')
-#             sp.write(send_value2)
-#             assert send_value2 == os.read(mpty, 1024).decode('ascii')
+        app.put('/open', data={'port': sport}, headers={'api_lock': lock})
+
+        app.put('/write', data={'data': 'EHLO'}, headers={'api_lock': lock})
+        assert 'EHLO' == os.read(mpty, 1024).decode('ascii')
+
+        # second send
+        app.put(
+            '/write',
+            data={'data': 'Random string'},
+            headers={'api_lock': lock})
+        assert 'Random string' == os.read(mpty, 1024).decode('ascii')
+
+
+def test_read_values():
+    # open psuedo pty serial port, send data with api and raw read its received
+    with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
+        app.put('/open', data={'port': sport}, headers={'api_lock': lock})
+
+        os.write(mpty, 'EHLO')
+        response = app.put(
+            '/read',
+            headers={'api_lock': lock})
+        assert 'EHLO' == os.read(mpty, 1024).decode('ascii')
+
+        # second send
+        response = app.put(
+            '/read',
+            headers={'api_lock': lock})
+        assert 'Random string' == os.read(mpty, 1024).decode('ascii')
+
 
 
 # def test_multiple_send():

@@ -27,3 +27,11 @@ python setup.py test
 
 ## Docker
     
+** Useful terrminal commands
+When developing its usefull to read and write data direct you can use these sort of commands in testing
+
+#+BEGIN_SRC sh
+socat -d -d pty,raw,echo=0 pty,raw,echo=0
+screen /dev/ttyUSB0 57600
+echo "Hello" > /dev/pty/6
+#+END_SRC

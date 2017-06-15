@@ -5,6 +5,7 @@ __version__ = '0.1.1'
 import json
 import urllib
 import random
+import logging
 from io import StringIO
 
 from collections import deque
@@ -14,6 +15,8 @@ from flask_restful import reqparse, abort, Api, Resource
 
 from serjax.connect import serialPort
 
+
+logging.basicConfig(level=logging.DEBUG)
 serial_lock = None
 history = deque(maxlen=100)
 printer = serialPort()
@@ -51,7 +54,7 @@ class Connection(Resource):
         global serial_lock
         if serial_lock is not None:
             return abort(404, message='Serial port in use')
-        serial_lock = random.getrandbits(128)
+        serial_lock = str(random.getrandbits(128))
         return {'api_lock': serial_lock}, 201
 
     @api_lock
@@ -113,6 +116,7 @@ class DataSend(Resource):
     @connected
     @api_lock
     def post(self):
+        logging.debug('send')
         """ Buffer multiple commands"""
         data = StringIO(request.form['data'])
         next_command = request.form.get('response_String')
@@ -155,10 +159,9 @@ api.add_resource(History, '/history')
 api.add_resource(Status, '/status')
 api.add_resource(Waiting, '/waiting')
 api.add_resource(PortList, '/ports')
-api.add_resource(DataSend, '/write')
-api.add_resource(DataRecv, '/recv')
+# api.add_resource(DataSend, '/write')
+# api.add_resource(DataRecv, '/recv')
 api.add_resource(ClosePort, '/close')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=5005)
-

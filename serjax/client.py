@@ -1,3 +1,4 @@
+"""Client to connect to flask server"""
 import requests
 
 
@@ -6,10 +7,10 @@ class serial(object):
     api_lock = ''
     headers = {}
 
-    def __init__(self, url='', port=None):
+    def __init__(self, url, port=None):
         self.url = url
         response = self.get('%s/open' % self.url)
-        self.headers = {'api_lock': response.get('api_lock')}
+        self.headers = {'api_lock': str(response.get('api_lock'))}
         if port:
             self.open(port)
 
@@ -17,6 +18,7 @@ class serial(object):
         return requests.get(url, headers=self.headers).json()
 
     def put(self, url, data=None):
+        # byte_data = bytearray(data, 'utf-8')
         return requests.put(url, data=data, headers=self.headers).json()
 
     def post(self, url, data=None):
@@ -40,6 +42,10 @@ class serial(object):
             data={'port': port})
         return response
 
+    def close(self):
+        self.api_lock = ''
+        self.get('%s/close' % self.url)
+
     def __enter__(self):
         return self
 
@@ -57,6 +63,9 @@ class serial(object):
         result = self.get('%s/recv' % self.url)
         return result.get('data')
 
+    def status(self):
+        result = self.get('%s/status' % self.url)
+        return result.get('data')
+
     def __exit__(self, type, value, traceback):
-        self.api_lock = ''
-        self.get('%s/close' % self.url)
+        self.close()
