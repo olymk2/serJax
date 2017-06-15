@@ -1,4 +1,4 @@
-from requests import put, get, post
+import requests
 
 
 class serial(object):
@@ -7,20 +7,20 @@ class serial(object):
     headers = {}
 
     def __init__(self, url='', port=None):
-        self.url = url        
+        self.url = url
         response = self.get('%s/open' % self.url)
         self.headers = {'api_lock': response.get('api_lock')}
         if port:
             self.open(port)
 
     def get(self, url):
-        return get(url, headers = self.headers).json()
+        return requests.get(url, headers=self.headers).json()
 
     def put(self, url, data=None):
-        return put(url, data=data, headers = self.headers).json()
+        return requests.put(url, data=data, headers=self.headers).json()
 
     def post(self, url, data=None):
-        return post(url, data=data, headers = self.headers).json()
+        return requests.post(url, data=data, headers=self.headers).json()
 
     def isConnected(self):
         response = self.get('%s/status' % self.url)
@@ -40,7 +40,7 @@ class serial(object):
             data={'port': port})
         return response
 
-    def __enter__(self):        
+    def __enter__(self):
         return self
 
     def write(self, data):
@@ -60,4 +60,3 @@ class serial(object):
     def __exit__(self, type, value, traceback):
         self.api_lock = ''
         self.get('%s/close' % self.url)
-

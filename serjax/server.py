@@ -67,12 +67,14 @@ class Connection(Resource):
             return {'status': 'connected'}, 201
         return abort(404, message='not connected')
 
+
 class ClosePort(Resource):
     def get(self):
         global serial_lock
         printer.close()
         serial_lock = None
         return {'status': 'closed'}, 201
+
 
 class Help(Resource):
     def get(self):
@@ -83,9 +85,11 @@ class Help(Resource):
                 func_list[rule.rule] = app.view_functions[rule.endpoint].__doc__
         return json.dumps(func_list)
 
+
 class Status(Resource):
     def get(self):
         return {'connected': printer.isConnected(), 'locked':True if serial_lock else False}, 201
+
 
 class Waiting(Resource):
     @connected
