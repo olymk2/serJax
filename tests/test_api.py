@@ -2,7 +2,44 @@ import os
 import pty
 import json
 import unittest
+from contextlib import contextmanager
+
 from serjax.server import app
+
+
+class ApiHelper:
+    def __enter__(self):
+        self.app = app.test_client()
+        self.app.testing = True
+        self.master_pty, self.slave_pty = pty.openpty()
+        self.slave_port = os.ttyname(self.slave_pty)
+        self.master_port = os.ttyname(self.master_pty)
+        return self.app, self.master_pty, self.slave_pty
+
+    def __exit__(self, type, value, traceback):
+        os.close(self.master_pty)
+        os.close(self.slave_pty)
+        self.app.get('/close')
+
+@contextmanager
+def api_helper(app, master_pty, slave_pty):
+    app = app.test_client()
+    app.testing = True
+    master_pty, slave_pty = pty.openpty()
+    slave_port = os.ttyname(slave_pty)
+    master_port = os.ttyname(master_pty)
+    yield app, master_pty, slave_pty
+    os.close(master_pty)
+    os.close(slave_pty)
+    app.get('/close')
+
+
+
+def test_fetch_api_lock(app, mpty, spty):
+    with api_helper as app, mpty, spty:
+        response = app.get('/open')
+        json_data = json.loads(response.get_data().decode('ascii'))
+        return str(json_data.get('api_lock', ''))
 
 
 class FlaskTestCase(unittest.TestCase):
