@@ -27,19 +27,23 @@ api = Api(app)
 
 parser = reqparse.RequestParser()
 
+
 def api_lock(func):
-    """decorator to check the api is not locked and 404 if it is locked or not locked by current user"""
+    """decorator to check if api is available will raise a 404 if locked"""
     def func_wrapper(name):
         request_lock = request.headers.get('api_lock')
 
         if request_lock is None:
-            return abort(404, message='You do not have a lock on this resource')
+            return abort(
+                404, message='You do not have a lock on this resource')
 
         if str(serial_lock) == str(request_lock):
             return func(name)
 
-        return abort(404, message='Api locked by another user')
+        return abort(
+            404, message='Api locked by another user')
     return func_wrapper
+
 
 def connected(func):
     """decorator to test if the serial port is opened"""
@@ -48,6 +52,7 @@ def connected(func):
             return abort(404, message='Not connected to a device')
         return func(name)
     return func_wrapper
+
 
 class Connection(Resource):
     def get(self):
@@ -85,13 +90,16 @@ class Help(Resource):
         func_list = {}
         for rule in app.url_map.iter_rules():
             if rule.endpoint != 'static':
-                func_list[rule.rule] = app.view_functions[rule.endpoint].__doc__
+                func_list[rule.rule] = (
+                    app.view_functions[rule.endpoint].__doc__)
         return json.dumps(func_list)
 
 
 class Status(Resource):
     def get(self):
-        return {'connected': printer.isConnected(), 'locked':True if serial_lock else False}, 201
+        return {
+            'connected': printer.isConnected(),
+            'locked': True if serial_lock else False}, 201
 
 
 class Waiting(Resource):
@@ -100,17 +108,21 @@ class Waiting(Resource):
     def get(self):
         return {'size': printer.inWaiting()}, 201
 
+
 class PortList(Resource):
     def get(self):
         portlist = {}
         for p in printer.list_ports():
-            portlist[p] = '%sconnect/%s' % (root_url, urllib.quote(p.strip('/')))
+            portlist[p] = '%sconnect/%s' % (
+                root_url, urllib.quote(p.strip('/')))
         return portlist, 201
+
 
 class History(Resource):
     def get(self):
         """Get history of read, usefull for debugging"""
         return {'data': json.dumps(list(history))}, 201
+
 
 class DataSend(Resource):
     @connected
@@ -138,6 +150,7 @@ class DataSend(Resource):
         printer.write(request.form.get('data', '').encode('ascii'))
         return {'status': 'ok'}, 201
 
+
 class DataRecv(Resource):
     @connected
     @api_lock
@@ -152,16 +165,19 @@ class DataRecv(Resource):
             history.append(u'recv  ' + buffer_read)
         return {'data': buffer_read}, 201
 
-## Actually setup the Api resource routing here
 
-api.add_resource(Connection, '/open')
-api.add_resource(History, '/history')
-api.add_resource(Status, '/status')
-api.add_resource(Waiting, '/waiting')
-api.add_resource(PortList, '/ports')
-# api.add_resource(DataSend, '/write')
-# api.add_resource(DataRecv, '/recv')
-api.add_resource(ClosePort, '/close')
+def add_api_endpoints(api_object):
+    api_object.add_resource(Connection, '/open')
+    api_object.add_resource(History, '/history')
+    api_object.add_resource(Status, '/status')
+    api_object.add_resource(Waiting, '/waiting')
+    api_object.add_resource(PortList, '/ports')
+    api_object.add_resource(DataSend, '/write')
+    api_object.add_resource(DataRecv, '/recv')
+    api_object.add_resource(ClosePort, '/close')
+
 
 if __name__ == '__main__':
+    add_api_endpoints(api)
+    # Actually setup the Api resource routing here
     app.run(host='0.0.0.0', debug=True, port=5005)

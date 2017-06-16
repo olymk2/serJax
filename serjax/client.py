@@ -64,8 +64,8 @@ class serial(object):
         return result.get('data')
 
     def status(self):
-        result = self.get('%s/status' % self.url)
-        return result.get('data')
+        response = self.get('%s/status' % self.url)
+        return response
 
     def __exit__(self, type, value, traceback):
         self.close()
