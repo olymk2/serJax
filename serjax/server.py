@@ -178,6 +178,6 @@ def add_api_endpoints(api_object):
 
 
 if __name__ == '__main__':
-    add_api_endpoints(api)
+    # add_api_endpoints(api)
     # Actually setup the Api resource routing here
     app.run(host='0.0.0.0', debug=True, port=5005)

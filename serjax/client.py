@@ -15,18 +15,26 @@ class serial(object):
             self.open(port)
 
     def get(self, url):
-        return requests.get(url, headers=self.headers).json()
+        response = requests.get(url, headers=self.headers)
+        if response.status_code == 201:
+            return response.json()
+        return {'status': 'error'}
 
     def put(self, url, data=None):
-        # byte_data = bytearray(data, 'utf-8')
-        return requests.put(url, data=data, headers=self.headers).json()
+        response = requests.put(url, data=data, headers=self.headers)
+        if response.status_code == 201:
+            return response.json()
+        return "{'status': 'error'}"
 
     def post(self, url, data=None):
-        return requests.post(url, data=data, headers=self.headers).json()
+        response = requests.post(url, data=data, headers=self.headers)
+        if response.status_code == 201:
+            return response.json()
+        return "{'status': 'error'}"
 
     def isConnected(self):
         response = self.get('%s/status' % self.url)
-        return response.get('connected', False)
+        return 'true' == response.get('connected', '').lower()
 
     def inWaiting(self):
         response = self.get('%s/waiting' % self.url)
@@ -50,7 +58,8 @@ class serial(object):
         return self
 
     def write(self, data):
-        self.put('%s/write' % self.url, data={'data': data})
+        response = self.put('%s/write' % self.url, data={'data': data})
+        return response
 
     def writelines(self, data):
         self.post('%s/write' % self.url, data={'data': data.read()})
@@ -59,6 +68,7 @@ class serial(object):
         result = self.get('%s/recv/%d' % (self.url, length))
         return result.get('data')
 
+    # If nothing to read return None
     def read(self):
         result = self.get('%s/recv' % self.url)
         return result.get('data')

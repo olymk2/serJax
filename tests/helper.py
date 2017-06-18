@@ -4,8 +4,10 @@ import json
 import pytest
 from contextlib import contextmanager
 from serjax.server import app as app_test
+from serjax.server import api, add_api_endpoints
 from serjax.client import serial
 
+add_api_endpoints(api)
 
 @contextmanager
 @pytest.fixture
@@ -18,6 +20,9 @@ def fetch_api_lock():
     master_port = os.ttyname(master_pty)
 
     lock_response = app.get('/open')
+    # assert lock_response.status_code == 201
+    print(lock_response)
+    print(lock_response.get_data())
     json_data = json.loads(lock_response.get_data().decode('ascii'))
     lock = str(json_data.get('api_lock', ''))
     yield (
