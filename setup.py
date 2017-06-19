@@ -28,5 +28,5 @@ setup(
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=requirements,
     setup_requires=['pytest-runner'],
-    tests_require=['pytest-cov', 'pytest']
+    tests_require=['pytest-cov', 'pytest', 'mock']
 )
