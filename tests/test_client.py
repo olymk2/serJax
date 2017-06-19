@@ -1,13 +1,24 @@
-import os
-import json
 from mock import patch
 from serjax.client import serial
-from tests.helper import fetch_api_lock
-from tests.helper import testSerial
+from serjax import ERROR_NOT_CONNECTED, ERROR_NO_ENDPOINT
 
 
 def test_connection_to_invalid_url():
-    r = serial(url='http://localdoesnotexist:5005')
+    with serial(url='http://localdoesnotexist:5005') as client:
+        response = client.open('/dev/fakeport')
+        assert response == {'status': ERROR_NOT_CONNECTED}
+
+
+@patch('serjax.client.requests.put')
+@patch('serjax.client.requests.get')
+def test_port_list(mock_put, mock_get):
+    mock_put.return_value.json.return_value = {
+        'ports': ['/dev/tty0', '/dev/tty1']}
+    mock_put.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        for port in client.ports():
+            print(port)
+            assert port.startswith('/dev/')
 
 
 @patch('serjax.client.requests.get')
@@ -16,18 +27,18 @@ def test_open_port_values(mock_put, mock_get):
     mock_get.return_value.json.return_value = {'api_lock': '12345'}
     mock_get.return_value.status_code = 201
     with serial(url='http://localhost:5005') as client:
-        mock_put.return_value.json.return_value = "{'status': 'connected'}"
+        mock_put.return_value.json.return_value = {'status': 'connected'}
         mock_put.return_value.status_code = 201
         response = client.open('/dev/faketty')
-        assert response == "{'status': 'connected'}"
+        assert response == {'status': 'connected'}
 
     mock_get.return_value.json.return_value = {'api_lock': '12345'}
     mock_get.return_value.status_code = 201
     with serial(url='http://localhost:5005') as client:
-        mock_put.return_value.json.return_value = "{'status': 'error'}"
+        mock_put.return_value.json.return_value = {'status': ERROR_NO_ENDPOINT}
         mock_put.return_value.status_code = 404
         response = client.open('/dev/faketty')
-        assert response == "{'status': 'error'}"
+        assert response == {'status': ERROR_NO_ENDPOINT}
 
 
 @patch('serjax.client.requests.get')
@@ -44,10 +55,10 @@ def test_write_values(mock_put, mock_get):
     mock_get.return_value.json.return_value = {'api_lock': '12345'}
     mock_get.return_value.status_code = 201
     with serial(url='http://localhost:5005') as client:
-        mock_put.return_value.json.return_value = "{'status': 'connected'}"
+        mock_put.return_value.json.return_value = {'status': 'connected'}
         mock_put.return_value.status_code = 404
         response = client.write('failed messaage')
-        assert response == "{'status': 'error'}"
+        assert response == {'status': ERROR_NO_ENDPOINT}
 
 
 @patch('serjax.client.requests.get')

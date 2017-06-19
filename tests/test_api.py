@@ -20,7 +20,10 @@ def test_open_non_existant_port():
     """testing opening a serial port that does not exist"""
     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
         # response = app.get('/close')
-        response = app.put('/open', data={'port': '/dev/ttyNull'}, headers={'api_lock': lock})
+        response = app.put(
+            '/open',
+            data={'port': '/dev/ttyNull'},
+            headers={'api_lock': lock})
         assert response.status_code == 404
 
 
@@ -34,8 +37,13 @@ def test_open_port_when_api_is_locked():
 def test_read_data():
     """test reading data from api"""
     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
-        response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
-        response = app.get('/recv', headers={'api_lock': lock})
+        response = app.put(
+            '/open',
+            data={'port': sport},
+            headers={'api_lock': lock})
+        response = app.get(
+            '/recv',
+            headers={'api_lock': lock})
         assert response.status_code == 201
 
 
@@ -43,8 +51,14 @@ def test_write_data():
     """test writting data to the api"""
     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
         send_data = u'ello'
-        response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
-        response = app.put('/write', data={'data': send_data}, headers={'api_lock': lock})
+        response = app.put(
+            '/open',
+            data={'port': sport},
+            headers={'api_lock': lock})
+        response = app.put(
+            '/write',
+            data={'data': send_data},
+            headers={'api_lock': lock})
         assert send_data == os.read(mpty, 1024).decode('ascii')
         assert response.status_code == 201
 
@@ -57,8 +71,14 @@ def test_write_data_buffered():
             ello 2\n
             ello 3\n
             ello 4\n"""
-        response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
-        response = app.post('/write', data={'data': send_data}, headers={'api_lock': lock})
+        response = app.put(
+            '/open',
+            data={'port': sport},
+            headers={'api_lock': lock})
+        response = app.post(
+            '/write',
+            data={'data': send_data},
+            headers={'api_lock': lock})
         assert send_data == os.read(mpty, 1024).decode('ascii')
         assert response.status_code == 201
 
@@ -70,14 +90,17 @@ def test_get_port_list():
         assert response.status_code == 201
 
         json_data = json.loads(response.get_data().decode('ascii'))
-        assert sport in json_data.keys()
-        assert mport in json_data.keys()
+        assert sport in json_data.get('ports')
+        assert mport in json_data.get('ports')
 
 
 def test_status():
     """Get size in waiting"""
     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
-        response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
+        response = app.put(
+            '/open',
+            data={'port': sport},
+            headers={'api_lock': lock})
         response = app.get('/status')
         assert response.status_code == 201
 
@@ -85,9 +108,13 @@ def test_status():
 def test_in_waiting():
     """Get size in waiting"""
     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
-        response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
-        # api_lock = open_port()
-        response = app.get('/waiting',headers={'api_lock': lock})
+        response = app.put(
+            '/open',
+            data={'port': sport},
+            headers={'api_lock': lock})
+        response = app.get(
+            '/waiting',
+            headers={'api_lock': lock})
 
         assert response.status_code == 201
 

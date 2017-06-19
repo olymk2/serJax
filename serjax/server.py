@@ -111,11 +111,7 @@ class Waiting(Resource):
 
 class PortList(Resource):
     def get(self):
-        portlist = {}
-        for p in printer.list_ports():
-            portlist[p] = '%sconnect/%s' % (
-                root_url, urllib.quote(p.strip('/')))
-        return portlist, 201
+        return {'ports': [p for p in printer.list_ports()]}, 201
 
 
 class History(Resource):

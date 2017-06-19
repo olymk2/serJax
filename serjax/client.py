@@ -1,36 +1,54 @@
 """Client to connect to flask server"""
 import requests
+from requests.exceptions import ConnectionError
+from serjax import ERROR_NOT_CONNECTED, ERROR_NO_ENDPOINT
 
 
 class serial(object):
     url = 'http://localhost:5005/'
     api_lock = ''
     headers = {}
+    connected = False
 
     def __init__(self, url, port=None):
+        if not url:
+            return
+
         self.url = url
-        response = self.get('%s/open' % self.url)
-        self.headers = {'api_lock': str(response.get('api_lock'))}
-        if port:
-            self.open(port)
+        # response = self.get('%s/open' % self.url)
+        # self.headers = {'api_lock': str(response.get('api_lock'))}
+
+        if not port:
+            return
+
+        self.open(port)
 
     def get(self, url):
-        response = requests.get(url, headers=self.headers)
-        if response.status_code == 201:
-            return response.json()
-        return {'status': 'error'}
+        try:
+            response = requests.get(url, headers=self.headers)
+            if response.status_code == 201:
+                return response.json()
+        except ConnectionError:
+            return {'status': ERROR_NOT_CONNECTED}
+        return {'status': ERROR_NO_ENDPOINT}
 
     def put(self, url, data=None):
-        response = requests.put(url, data=data, headers=self.headers)
-        if response.status_code == 201:
-            return response.json()
-        return "{'status': 'error'}"
+        try:
+            response = requests.put(url, data=data, headers=self.headers)
+            if response.status_code == 201:
+                return response.json()
+        except ConnectionError:
+            return {'status': ERROR_NOT_CONNECTED}
+        return {'status': ERROR_NO_ENDPOINT}
 
     def post(self, url, data=None):
-        response = requests.post(url, data=data, headers=self.headers)
-        if response.status_code == 201:
-            return response.json()
-        return "{'status': 'error'}"
+        try:
+            response = requests.post(url, data=data, headers=self.headers)
+            if response.status_code == 201:
+                return response.json()
+        except ConnectionError:
+            return {'status': ERROR_NOT_CONNECTED}
+        return {'status': ERROR_NO_ENDPOINT}
 
     def isConnected(self):
         response = self.get('%s/status' % self.url)
@@ -42,12 +60,13 @@ class serial(object):
 
     def ports(self):
         ports = self.get('%s/ports' % (self.url))
-        return ports.keys()
+        return ports.get('ports', '')
 
     def open(self, port):
         response = self.put(
             '%s/open' % (self.url),
             data={'port': port})
+        self.headers = {'api_lock': response.get('api_lock', '')}
         return response
 
     def close(self):
