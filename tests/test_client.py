@@ -1,112 +1,122 @@
 import os
-import pty
 import json
-import unittest
-from io import StringIO
-from io import BytesIO
-from serjax.server import app
+from mock import patch
 from serjax.client import serial
+from tests.helper import fetch_api_lock
+from tests.helper import testSerial
 
 
-class testSerial(serial):
-    """override the client get and put methods for testing"""
-    def __init__(self, url='', port=None):
-        self.app = app.test_client()
-        self.app.testing = True
-        super(testSerial, self).__init__(url=url, port=port)
+@patch('serjax.client.requests.get')
+@patch('serjax.client.requests.put')
+def test_open_port_values(mock_put, mock_get):
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_put.return_value.json.return_value = "{'status': 'connected'}"
+        mock_put.return_value.status_code = 201
+        response = client.open('/dev/faketty')
+        assert response == "{'status': 'connected'}"
 
-    def get(self, url):
-        return json.loads(
-            self.app.get(
-                url,
-                headers=self.headers
-            ).get_data().decode('ascii')
-        )
-
-    def put(self, url, data=None):
-        return json.loads(
-            self.app.put(
-                url,
-                data=data,
-                headers=self.headers
-            ).get_data().decode('ascii')
-        )
-
-    def post(self, url, data=None):
-        return json.loads(
-            self.app.put(
-                url,
-                data=data,
-                headers=self.headers
-            ).get_data().decode('ascii')
-        )
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_put.return_value.json.return_value = "{'status': 'error'}"
+        mock_put.return_value.status_code = 404
+        response = client.open('/dev/faketty')
+        assert response == "{'status': 'error'}"
 
 
-class FlaskTestCase(unittest.TestCase):
+@patch('serjax.client.requests.get')
+@patch('serjax.client.requests.put')
+def test_write_values(mock_put, mock_get):
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_put.return_value.json.return_value = "{'status': 'ok'}"
+        mock_put.return_value.status_code = 201
+        response = client.write('failed messaage')
+        assert response == "{'status': 'ok'}"
 
-    def setUp(self):
-        """Create instance of app and a serial port to use"""
-        self.master_pty, self.slave_pty = pty.openpty()
-        self.slave_port = os.ttyname(self.slave_pty)
-        self.master_port = os.ttyname(self.master_pty)
-
-    def doCleanups(self):
-        """close the psuedo ttys and release the lock"""
-        os.close(self.master_pty)
-        os.close(self.slave_pty)
-
-    def test_complete_example(self):
-        send_value1 = 'EHLO'
-        send_value2 = 'Test value'
-        with testSerial(port=self.slave_port) as sp:
-            sp.write(send_value1)
-            self.assertEqual(send_value1, os.read(self.master_pty, 1024).decode('ascii'))
-            sp.write(send_value2)
-            self.assertEqual(send_value2, os.read(self.master_pty, 1024).decode('ascii'))
-
-    def test_multiple_send(self):
-        send_values = StringIO(u"""
-            G0 X10.00\n
-            G0 X-10.00\n
-        """)
-
-        with testSerial(port=self.slave_port) as sp:
-            sp.writelines(send_values)
-            send_values.seek(0)
-            self.assertEqual(send_values.read(), os.read(self.master_pty, 1024).decode('ascii'))
-
-    def test_is_connected(self):
-        """Test that we can get an api_lock key"""
-        with testSerial(port=self.master_port) as serial_port:
-            serial_port.isConnected()
-
-    def test_in_waiting(self):
-        """Test that we can get an api_lock key"""
-        with testSerial(port=self.master_port) as serial_port:
-            serial_port.inWaiting()
-
-    def test_read(self):
-        """Test that we can get an api_lock key"""
-        text = b'long string'
-        with testSerial(port=self.slave_port) as serial_port:
-            os.write(self.master_pty, text)
-            self.assertEqual(text, serial_port.read())
-
-    def test_recv(self):
-        """Test that we can get an api_lock key"""
-        text = b'long string'
-        with testSerial(port=self.slave_port) as serial_port:
-            os.write(self.master_pty, text)
-            #self.assertEqual(text, serial_port.recv())
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_put.return_value.json.return_value = "{'status': 'connected'}"
+        mock_put.return_value.status_code = 404
+        response = client.write('failed messaage')
+        assert response == "{'status': 'error'}"
 
 
-    def test_open_connection(self):
-        """Test that we can get an api_lock key"""
-        with testSerial(port=self.slave_port) as sp1:
-            sp1.read()
-            with testSerial(port=self.master_port) as sp2:
-                sp2.read()
-        #todo need to assert here
+@patch('serjax.client.requests.get')
+@patch('serjax.client.requests.put')
+def test_read_values(mock_put, mock_get):
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_get.return_value.json.return_value = {'data': 'Read Value'}
+        mock_get.return_value.status_code = 201
+        response = client.read()
+        assert response == 'Read Value'
 
-if __name__ == '__main__':
-    unittest.main()
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_get.return_value.json.return_value = {'data': 'read_value'}
+        mock_get.return_value.status_code = 404
+        response = client.read()
+        assert response == None
+
+
+@patch('serjax.client.requests.get')
+def test_is_connected(mock_get):
+    """Test that we can get an api_lock key"""
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_get.return_value.json.return_value = {'connected': 'True'}
+        mock_get.return_value.status_code = 201
+        response = client.isConnected()
+        assert response == True
+
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_get.return_value.json.return_value = {'connected': 'False'}
+        mock_get.return_value.status_code = 404
+        response = client.isConnected()
+        assert response == False
+
+# def test_in_waiting():
+#     """Test that we can get an api_lock key"""
+#     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
+#         response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
+#         with testSerial(port=mport) as serial_port:
+#             serial_port.inWaiting()
+
+# def test_read():
+#     """Test that we can get an api_lock key"""
+#     text = b'long string'
+#     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
+#         with testSerial(port=sport) as serial_port:
+#             os.write(mpty, text)
+#             assert text == serial_port.read()
+
+# def test_recv():
+#     """Test that we can get an api_lock key"""
+#     text = b'long string'
+#     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
+#         response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
+#         with testSerial(port=sport) as serial_port:
+#             os.write(mpty, text)
+#             #assert text, serial_port.recv())
+
+
+# def test_open_connection():
+#     """Test that we can get an api_lock key"""
+#     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
+#         response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
+#         with testSerial(port=sport) as sp1:
+#             sp1.read()
+#             with testSerial(port=mport) as sp2:
+#                 sp2.read()
+#         #todo need to assert here
+

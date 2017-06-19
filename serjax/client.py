@@ -1,4 +1,5 @@
-from requests import put, get, post
+"""Client to connect to flask server"""
+import requests
 
 
 class serial(object):
@@ -6,25 +7,34 @@ class serial(object):
     api_lock = ''
     headers = {}
 
-    def __init__(self, url='', port=None):
-        self.url = url        
+    def __init__(self, url, port=None):
+        self.url = url
         response = self.get('%s/open' % self.url)
-        self.headers = {'api_lock': response.get('api_lock')}
+        self.headers = {'api_lock': str(response.get('api_lock'))}
         if port:
             self.open(port)
 
     def get(self, url):
-        return get(url, headers = self.headers).json()
+        response = requests.get(url, headers=self.headers)
+        if response.status_code == 201:
+            return response.json()
+        return {'status': 'error'}
 
     def put(self, url, data=None):
-        return put(url, data=data, headers = self.headers).json()
+        response = requests.put(url, data=data, headers=self.headers)
+        if response.status_code == 201:
+            return response.json()
+        return "{'status': 'error'}"
 
     def post(self, url, data=None):
-        return post(url, data=data, headers = self.headers).json()
+        response = requests.post(url, data=data, headers=self.headers)
+        if response.status_code == 201:
+            return response.json()
+        return "{'status': 'error'}"
 
     def isConnected(self):
         response = self.get('%s/status' % self.url)
-        return response.get('connected', False)
+        return 'true' == response.get('connected', '').lower()
 
     def inWaiting(self):
         response = self.get('%s/waiting' % self.url)
@@ -40,11 +50,16 @@ class serial(object):
             data={'port': port})
         return response
 
-    def __enter__(self):        
+    def close(self):
+        self.api_lock = ''
+        self.get('%s/close' % self.url)
+
+    def __enter__(self):
         return self
 
     def write(self, data):
-        self.put('%s/write' % self.url, data={'data': data})
+        response = self.put('%s/write' % self.url, data={'data': data})
+        return response
 
     def writelines(self, data):
         self.post('%s/write' % self.url, data={'data': data.read()})
@@ -53,11 +68,14 @@ class serial(object):
         result = self.get('%s/recv/%d' % (self.url, length))
         return result.get('data')
 
+    # If nothing to read return None
     def read(self):
         result = self.get('%s/recv' % self.url)
         return result.get('data')
 
-    def __exit__(self, type, value, traceback):
-        self.api_lock = ''
-        self.get('%s/close' % self.url)
+    def status(self):
+        response = self.get('%s/status' % self.url)
+        return response
 
+    def __exit__(self, type, value, traceback):
+        self.close()
