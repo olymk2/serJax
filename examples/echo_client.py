@@ -9,10 +9,12 @@ slave_port = os.ttyname(slave_pty)
 master_port = os.ttyname(master_pty)
 
 with serial(url='http://localhost:5005') as client:
+    print('List ports')
+    print("\t%s" % client.ports())
     print('Open port')
     print("\t%s" % client.open(slave_port))
     print('Client isConnected')
-    print("\t%s" % client.isConnected())
+    print("\t%b" % client.isConnected())
     print('Client status')
     print("\t%s" % client.status())
 

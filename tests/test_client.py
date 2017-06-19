@@ -6,6 +6,10 @@ from tests.helper import fetch_api_lock
 from tests.helper import testSerial
 
 
+def test_connection_to_invalid_url():
+    r = serial(url='http://localdoesnotexist:5005')
+
+
 @patch('serjax.client.requests.get')
 @patch('serjax.client.requests.put')
 def test_open_port_values(mock_put, mock_get):

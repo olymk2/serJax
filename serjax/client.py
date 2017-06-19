@@ -41,7 +41,7 @@ class serial(object):
         return response.get('size', 0)
 
     def ports(self):
-        ports = self.get('%s/ports' % (self.url)).json()
+        ports = self.get('%s/ports' % (self.url))
         return ports.keys()
 
     def open(self, port):
