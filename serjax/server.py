@@ -3,7 +3,6 @@
 __version__ = '0.1.1'
 
 import json
-import urllib
 import random
 import logging
 from io import StringIO
@@ -16,7 +15,7 @@ from flask_restful import reqparse, abort, Api, Resource
 from serjax.connect import serialPort
 
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 serial_lock = None
 history = deque(maxlen=100)
 printer = serialPort()
@@ -30,7 +29,7 @@ parser = reqparse.RequestParser()
 
 def api_lock(func):
     """decorator to check if api is available will raise a 404 if locked"""
-    def func_wrapper(name):
+    def func_wrapper(*args):
         request_lock = request.headers.get('api_lock')
 
         if request_lock is None:
@@ -38,7 +37,7 @@ def api_lock(func):
                 404, message='You do not have a lock on this resource')
 
         if str(serial_lock) == str(request_lock):
-            return func(name)
+            return func(*args)
 
         return abort(
             404, message='Api locked by another user')
@@ -47,15 +46,16 @@ def api_lock(func):
 
 def connected(func):
     """decorator to test if the serial port is opened"""
-    def func_wrapper(name):
+    def func_wrapper(*args):
         if printer.connected is False:
             return abort(404, message='Not connected to a device')
-        return func(name)
+        return func(*args)
     return func_wrapper
 
 
 class Connection(Resource):
     def get(self):
+        logging.info('open get')
         global serial_lock
         if serial_lock is not None:
             return abort(404, message='Serial port in use')
@@ -64,15 +64,22 @@ class Connection(Resource):
 
     @api_lock
     def put(self):
+        logging.info('open put')
         global serial_lock
+        # if serial_lock is not None:
+        #     return abort(404, message='Serial port in use')
         port = request.form.get('port', '')
+        logging.info(port)
         if not port:
             return abort(404, message='Invalid port')
 
         printer.connect(port)
 
         if printer.isConnected() is True:
-            return {'status': 'connected'}, 201
+            # serial_lock = str(random.getrandbits(128))
+            return {
+                'status': 'connected',
+                'api_lock': serial_lock}, 201
         return abort(404, message='not connected')
 
 

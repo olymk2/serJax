@@ -75,10 +75,10 @@ def test_read_values(mock_put, mock_get):
     mock_get.return_value.json.return_value = {'api_lock': '12345'}
     mock_get.return_value.status_code = 201
     with serial(url='http://localhost:5005') as client:
-        mock_get.return_value.json.return_value = {'data': 'read_value'}
+        mock_get.return_value.json.return_value = {'data': ''}
         mock_get.return_value.status_code = 404
         response = client.read()
-        assert response == None
+        assert response == ''
 
 
 @patch('serjax.client.requests.get')

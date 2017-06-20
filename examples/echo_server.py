@@ -13,7 +13,7 @@ class DataSendEcho(DataSend):
     @connected
     @api_lock
     def post(self):
-        logging.info('Posting = %s' % request.form['data'])
+        logging.debug('Posting = %s' % request.form['data'])
         result = super(DataSendEcho, self).post()
         logging.info(result)
         return result
@@ -21,25 +21,25 @@ class DataSendEcho(DataSend):
     @connected
     @api_lock
     def put(self):
-        logging.info('Puting = %s' % request.form['data'])
+        logging.debug('Puting = %s' % request.form['data'])
         result = super(DataSendEcho, self).put()
         logging.info(result)
         return result
 
 
-# class DataRecvEcho(DataRecv):
-#     @connected
-#     @api_lock
-#     def get(self, length=None):
-#         logging.info('Data being received')
-#         result = super(DataRecvEcho, self).get(length)
-#         logging.info(result)
-#         return result
+class DataRecvEcho(DataRecv):
+    @connected
+    @api_lock
+    def get(self, length=None):
+        logging.debug('Data being received')
+        result = super(DataRecvEcho, self).get(length)
+        logging.info(result)
+        return result
 
 
 # register these first, this stops them being registered in add_api_endpoints
 api.add_resource(DataSendEcho, '/write')
-# api.add_resource(DataRecvEcho, '/recv')
+api.add_resource(DataRecvEcho, '/recv')
 add_api_endpoints(api)
 
 

@@ -14,13 +14,13 @@ with serial(url='http://localhost:5005') as client:
     print('Open port')
     print("\t%s" % client.open(slave_port))
     print('Client isConnected')
-    print("\t%d" % client.isConnected())
+    # print("\t%d" % client.isConnected())
     print('Client status')
     print("\t%s" % client.status())
 
     # you should see this pop up in the echo server logs 
-    client.write('test first message')
-
+    a = client.write('test first message')
+    print(a)
 
     print('Read text on serial buffer')
     os.write(master_pty, 'Read text on serial buffer')

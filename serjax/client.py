@@ -15,8 +15,6 @@ class serial(object):
             return
 
         self.url = url
-        # response = self.get('%s/open' % self.url)
-        # self.headers = {'api_lock': str(response.get('api_lock'))}
 
         if not port:
             return
@@ -30,11 +28,14 @@ class serial(object):
                 return response.json()
         except ConnectionError:
             return {'status': ERROR_NOT_CONNECTED}
-        return {'status': ERROR_NO_ENDPOINT}
+        result = response.json()
+        result['status'] = ERROR_NO_ENDPOINT
+        return result #{'status': ERROR_NO_ENDPOINT}
 
     def put(self, url, data=None):
         try:
             response = requests.put(url, data=data, headers=self.headers)
+            print(response.json())
             if response.status_code == 201:
                 return response.json()
         except ConnectionError:
@@ -63,10 +64,13 @@ class serial(object):
         return ports.get('ports', '')
 
     def open(self, port):
+        if not self.api_lock:
+            response = self.get('%s/open' % self.url)
+            self.headers = {'api_lock': str(response.get('api_lock'))}
         response = self.put(
             '%s/open' % (self.url),
             data={'port': port})
-        self.headers = {'api_lock': response.get('api_lock', '')}
+        # self.headers = {'api_lock': response.get('api_lock', '')}
         return response
 
     def close(self):
@@ -85,12 +89,12 @@ class serial(object):
 
     def recv(self, length=1):
         result = self.get('%s/recv/%d' % (self.url, length))
-        return result.get('data')
+        return result.get('data', '')
 
     # If nothing to read return None
     def read(self):
         result = self.get('%s/recv' % self.url)
-        return result.get('data')
+        return result.get('data','')
 
     def status(self):
         response = self.get('%s/status' % self.url)
