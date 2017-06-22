@@ -97,7 +97,7 @@ class serial(object):
     # If nothing to read return None
     def read(self):
         result = self.get('%s/recv' % self.url)
-        return result.get('data','')
+        return result.get('data', '')
 
     def status(self):
         response = self.get('%s/status' % self.url)

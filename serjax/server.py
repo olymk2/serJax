@@ -15,6 +15,10 @@ from flask_restful import reqparse, abort, Api, Resource
 from serjax.connect import serialPort
 
 
+logger = logging.getLogger('serjax')
+hdlr = logging.FileHandler('/tmp/serjax.log')
+logger.addHandler(hdlr) 
+
 # logging.basicConfig(level=logging.DEBUG)
 serial_lock = None
 history = deque(maxlen=100)
@@ -131,6 +135,7 @@ class DataSend(Resource):
     @connected
     @api_lock
     def post(self):
+        """Bulk data posted from client"""
         logging.debug('send')
         """ Buffer multiple commands"""
         data = StringIO(request.form['data'])
@@ -142,15 +147,18 @@ class DataSend(Resource):
                 if buffer_length > 0:
                     buffer_read = printer.read(buffer_length)
                     history.append(u'next ' + buffer_read)
+                    logger.info(buffer_read)
 
         return {'status': 'ok'}, 201
 
     @connected
     @api_lock
     def put(self):
-        """send single command"""
-        history.append(u'write %s' % request.form.get('data', ''))
-        printer.write(request.form.get('data', '').encode('ascii'))
+        """Data posted from client"""
+        recieved_data = request.form.get('data', '')
+        history.append(u'recv %s' % recieved_data)
+        printer.write(recieved_data.encode('ascii'))
+        logger.info(recieved_data)
         return {'status': 'ok'}, 201
 
 
@@ -158,6 +166,7 @@ class DataRecv(Resource):
     @connected
     @api_lock
     def get(self, length=None):
+        """client requested any data availabe"""
         buffer_read = ''
         buffer_length = printer.inWaiting()
         if buffer_length > 0:
@@ -165,7 +174,8 @@ class DataRecv(Resource):
                 buffer_read = printer.read()
             else:
                 buffer_read = printer.recv(buffer_length)
-            history.append(u'recv  ' + buffer_read)
+            history.append(u'sent  ' + buffer_read)
+            logger.info(buffer_read)
         return {'data': buffer_read}, 201
 
 
