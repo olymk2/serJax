@@ -9,7 +9,7 @@ class serialPort():
     coms = None
     connected = False
 
-    def isConnected(self):
+    def isOpen(self):
         return self.connected
 
     def connect(self, port='/tmp/ttyS11'):
@@ -23,11 +23,11 @@ class serialPort():
             )
 
             self.connected = self.coms.isOpen()
-            return self.connected
+            return '' #self.connected
         except Exception as e:
             logging.error(e)
             self.connected = False
-            return False
+            return str(e)
 
     def list_ports(self, pty=True):
         for port in glob.glob('/dev/ttyUSB*'):

@@ -13,8 +13,8 @@ with serial(url='http://localhost:5005') as client:
     print("\t%s" % client.ports())
     print('Open port')
     print("\t%s" % client.open(slave_port))
-    print('Client isConnected')
-    # print("\t%d" % client.isConnected())
+    print('Client isOpen')
+    # print("\t%d" % client.isOpen())
     print('Client status')
     print("\t%s" % client.status())
 

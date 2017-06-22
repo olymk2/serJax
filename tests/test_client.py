@@ -17,7 +17,6 @@ def test_port_list(mock_put, mock_get):
     mock_put.return_value.status_code = 201
     with serial(url='http://localhost:5005') as client:
         for port in client.ports():
-            print(port)
             assert port.startswith('/dev/')
 
 
@@ -87,18 +86,34 @@ def test_is_connected(mock_get):
     mock_get.return_value.json.return_value = {'api_lock': '12345'}
     mock_get.return_value.status_code = 201
     with serial(url='http://localhost:5005') as client:
-        mock_get.return_value.json.return_value = {'connected': 'True'}
+        mock_get.return_value.json.return_value = {'connected': True}
         mock_get.return_value.status_code = 201
-        response = client.isConnected()
-        assert response == True
+        response = client.isOpen()
+        assert response is True
 
     mock_get.return_value.json.return_value = {'api_lock': '12345'}
     mock_get.return_value.status_code = 201
     with serial(url='http://localhost:5005') as client:
-        mock_get.return_value.json.return_value = {'connected': 'False'}
+        mock_get.return_value.json.return_value = {'connected': False}
         mock_get.return_value.status_code = 404
-        response = client.isConnected()
-        assert response == False
+        response = client.isOpen()
+        assert response is False
+
+
+@patch('serjax.client.requests.get')
+@patch('serjax.client.requests.put')
+def test_switch_port(mock_put, mock_get):
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_put.return_value.json.return_value = {'status': 'connected'}
+        mock_put.return_value.status_code = 201
+        response = client.open('/dev/faketty1')
+        assert response == {'status': 'connected'}
+
+        response = client.open('/dev/faketty2')
+        assert response == {'status': 'connected'}
+
 
 # def test_in_waiting():
 #     """Test that we can get an api_lock key"""

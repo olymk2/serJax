@@ -73,14 +73,14 @@ class Connection(Resource):
         if not port:
             return abort(404, message='Invalid port')
 
-        printer.connect(port)
+        msg = printer.connect(port)
 
-        if printer.isConnected() is True:
+        if printer.isOpen() is True:
             # serial_lock = str(random.getrandbits(128))
             return {
                 'status': 'connected',
                 'api_lock': serial_lock}, 201
-        return abort(404, message='not connected')
+        return abort(404, message=msg)
 
 
 class ClosePort(Resource):
@@ -105,7 +105,7 @@ class Help(Resource):
 class Status(Resource):
     def get(self):
         return {
-            'connected': printer.isConnected(),
+            'connected': printer.isOpen(),
             'locked': True if serial_lock else False}, 201
 
 

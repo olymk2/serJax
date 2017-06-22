@@ -6,7 +6,7 @@ from serjax import ERROR_NOT_CONNECTED, ERROR_NO_ENDPOINT
 
 class serial(object):
     url = 'http://localhost:5005/'
-    api_lock = ''
+    api_lock = None
     headers = {}
     connected = False
 
@@ -35,6 +35,7 @@ class serial(object):
     def put(self, url, data=None):
         try:
             response = requests.put(url, data=data, headers=self.headers)
+            print(self.headers)
             print(response.json())
             if response.status_code == 201:
                 return response.json()
@@ -51,9 +52,10 @@ class serial(object):
             return {'status': ERROR_NOT_CONNECTED}
         return {'status': ERROR_NO_ENDPOINT}
 
-    def isConnected(self):
+    def isOpen(self):
         response = self.get('%s/status' % self.url)
-        return 'true' == response.get('connected', '').lower()
+        print(response)
+        return True is response.get('connected', False)
 
     def inWaiting(self):
         response = self.get('%s/waiting' % self.url)
@@ -64,6 +66,7 @@ class serial(object):
         return ports.get('ports', '')
 
     def open(self, port):
+        print(self.api_lock)
         if not self.api_lock:
             response = self.get('%s/open' % self.url)
             self.headers = {'api_lock': str(response.get('api_lock'))}
@@ -74,7 +77,7 @@ class serial(object):
         return response
 
     def close(self):
-        self.api_lock = ''
+        self.api_lock = None
         self.get('%s/close' % self.url)
 
     def __enter__(self):
