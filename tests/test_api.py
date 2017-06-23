@@ -84,7 +84,8 @@ def test_write_data_buffered():
 
 
 def test_get_port_list():
-    """Get a list of ports this can be done by anyone at any time no locking involved"""
+    """Get a list of ports this can be done at any time
+    no locking involved for this"""
     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
         response = app.get('/ports')
         assert response.status_code == 201

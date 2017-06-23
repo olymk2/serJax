@@ -115,38 +115,40 @@ def test_switch_port(mock_put, mock_get):
         assert response == {'status': 'connected'}
 
 
-# def test_in_waiting():
-#     """Test that we can get an api_lock key"""
-#     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
-#         response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
-#         with testSerial(port=mport) as serial_port:
-#             serial_port.inWaiting()
+@patch('serjax.client.requests.get')
+@patch('serjax.client.requests.put')
+def test_in_waiting(mock_put, mock_get):
+    """Test that we can get an api_lock key"""
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_put.return_value.json.return_value = {'status': 'connected'}
+        mock_put.return_value.status_code = 201
+        response = client.open('/dev/faketty1')
 
-# def test_read():
-#     """Test that we can get an api_lock key"""
-#     text = b'long string'
-#     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
-#         with testSerial(port=sport) as serial_port:
-#             os.write(mpty, text)
-#             assert text == serial_port.read()
+        mock_get.return_value.json.return_value = {'size': 0}
+        mock_get.return_value.status_code = 201
+        response = client.inWaiting()
+        assert response == 0
 
-# def test_recv():
-#     """Test that we can get an api_lock key"""
-#     text = b'long string'
-#     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
-#         response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
-#         with testSerial(port=sport) as serial_port:
-#             os.write(mpty, text)
-#             #assert text, serial_port.recv())
+        mock_get.return_value.json.return_value = {'size': len('EHLO')}
+        mock_get.return_value.status_code = 201
+        response = client.inWaiting()
+        assert response == len('EHLO')
 
 
-# def test_open_connection():
-#     """Test that we can get an api_lock key"""
-#     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
-#         response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
-#         with testSerial(port=sport) as sp1:
-#             sp1.read()
-#             with testSerial(port=mport) as sp2:
-#                 sp2.read()
-#         #todo need to assert here
+@patch('serjax.client.requests.get')
+@patch('serjax.client.requests.put')
+def test_open_connection(mock_put, mock_get):
+    mock_get.return_value.json.return_value = {'api_lock': '12345'}
+    mock_get.return_value.status_code = 201
+    with serial(url='http://localhost:5005') as client:
+        mock_put.return_value.json.return_value = {'status': 'connected'}
+        mock_put.return_value.status_code = 201
+        response = client.open('/dev/faketty1')
+        assert response == {'status': 'connected'}
 
+        mock_put.return_value.json.return_value = {'status': 'disconnected'}
+        mock_put.return_value.status_code = 404
+        response = client.open('/dev/faketty1')
+        assert response == {'status': 3}
