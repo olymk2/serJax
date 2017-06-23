@@ -15,6 +15,8 @@ from flask_restful import reqparse, abort, Api, Resource
 from serjax.connect import serialPort
 
 
+#TODO look into using beaker http://beaker.readthedocs.io/en/latest/modules/cache.html
+
 logger = logging.getLogger('serjax')
 hdlr = logging.FileHandler('/tmp/serjax.log')
 logger.addHandler(hdlr) 
@@ -69,7 +71,8 @@ class Connection(Resource):
     @api_lock
     def put(self):
         logging.info('open put')
-        global serial_lock
+        global serial_lock, history
+        history = deque(maxlen=100)
         # if serial_lock is not None:
         #     return abort(404, message='Serial port in use')
         port = request.form.get('port', '')
@@ -156,7 +159,7 @@ class DataSend(Resource):
     def put(self):
         """Data posted from client"""
         recieved_data = request.form.get('data', '')
-        history.append(u'recv %s' % recieved_data)
+        history.append(u'> %s' % recieved_data)
         printer.write(recieved_data.encode('ascii'))
         logger.info(recieved_data)
         return {'status': 'ok'}, 201
@@ -174,7 +177,7 @@ class DataRecv(Resource):
                 buffer_read = printer.read()
             else:
                 buffer_read = printer.recv(buffer_length)
-            history.append(u'sent  ' + buffer_read)
+            history.append(u'<  ' + buffer_read)
             logger.info(buffer_read)
         return {'data': buffer_read}, 201
 

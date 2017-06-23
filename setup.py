@@ -10,6 +10,7 @@ with open('LICENSE') as f:
 requirements = [
     'flask',
     'flask-restful',
+    'beaker',
     'requests',
     'zeroconf',
     'pyserial'

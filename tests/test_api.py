@@ -122,20 +122,32 @@ def test_in_waiting():
         assert json_data.get('size') == 0
 
 
-# def test_history():
-#     """Get size in waiting"""
-#     with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
-#         response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
-#         assert response.status_code == 201
-#         # api_lock = open_port()
-#         response = app.get('/history')
-#         assert response.status_code == 201
+def test_history():
+    """Get size in waiting"""
+    with fetch_api_lock() as (app, mpty, spty, mport, sport, rlock, lock):
+        response = app.put('/open', data={'port': sport}, headers={'api_lock': lock})
+        assert response.status_code == 201
+        # api_lock = open_port()
+        response = app.get('/history')
+        assert response.status_code == 201
 
-#         json_data = json.loads(response.get_data().decode('ascii'))
-#         assert json_data.get('data') == '[]'
+        json_data = json.loads(response.get_data().decode('ascii'))
+        assert json_data.get('data') == '[]'
 
-#         response = app.put('/write', data={'data': 'command 1'}, headers={'api_lock': lock})
-#         response = app.get('/history')
-#         json_data = json.loads(response.get_data().decode('ascii'))
-#         assert json_data.get('data') == '["write command 1"]'
-#         assert response.status_code == 201
+        response = app.put(
+            '/write',
+            data={'data': 'command 1'},
+            headers={'api_lock': lock})
+        response = app.get('/history')
+        json_data = json.loads(response.get_data().decode('ascii'))
+        assert json_data.get('data') == '["> command 1"]'
+        assert response.status_code == 201
+
+        response = app.put(
+            '/write',
+            data={'data': 'command 2'},
+            headers={'api_lock': lock})
+        response = app.get('/history')
+        json_data = json.loads(response.get_data().decode('ascii'))
+        assert json_data.get('data') == '["> command 1", "> command 2"]'
+        assert response.status_code == 201
